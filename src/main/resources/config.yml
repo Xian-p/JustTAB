@@ -1,0 +1,19 @@
+# How often to refresh the tablist in ticks (20 ticks = 1 second)
+update-interval: 20
+
+# Header and Footer support MiniMessage format (RGB, Gradients)
+# Docs: https://docs.advntr.dev/minimessage/format.html
+header:
+  - "<gradient:#ff0000:#00ff00><bold>JustTAB Network</bold></gradient>"
+  - "<gray>Welcome, <white><player>"
+
+footer:
+  - "<gray>TPS: <green><tps> <gray>| Ping: <green><ping>ms"
+  - "<gradient:blue:aqua>store.myserver.net</gradient>"
+
+# The format for the player's name inside the tab list
+# Placeholders: <prefix>, <suffix>, <player>
+player-format: "<prefix><white><player><suffix>"
+
+messages:
+  reload: "<green>JustTAB configuration reloaded successfully."
