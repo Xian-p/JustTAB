@@ -1,24 +1,23 @@
 package com.example.justtab.utils;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ColorUtil {
     
-    // Pattern to find &#123456
+    // Pattern to find Hex colors like &#FFFFFF
     private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
 
     /**
-     * Parses a string containing MiniMessage, Legacy (&), or Hex (&#) colors.
+     * Converts a string containing Legacy (&) and Hex (&#) codes 
+     * into a pure MiniMessage format string.
+     * 
+     * Example: "&aHello <player>" -> "<green>Hello <player>"
      */
-    public static Component parse(String text) {
-        if (text == null) return Component.empty();
+    public static String convert(String text) {
+        if (text == null) return "";
 
-        // 1. Convert &#123456 to <#123456> (MiniMessage format)
+        // 1. Convert Hex: &#123456 -> <#123456>
         Matcher matcher = HEX_PATTERN.matcher(text);
         StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
@@ -27,9 +26,9 @@ public class ColorUtil {
         matcher.appendTail(sb);
         text = sb.toString();
 
-        // 2. Convert Legacy &a to <green> (MiniMessage format)
-        // This is a simple replacement to ensure MiniMessage handles everything
-        text = text
+        // 2. Convert Legacy: &a -> <green>
+        // We replace all standard color codes with their MiniMessage tag equivalents.
+        return text
                 .replace("&0", "<black>")
                 .replace("&1", "<dark_blue>")
                 .replace("&2", "<dark_green>")
@@ -52,16 +51,5 @@ public class ColorUtil {
                 .replace("&n", "<underlined>")
                 .replace("&o", "<italic>")
                 .replace("&r", "<reset>");
-
-        // 3. Final Parse with MiniMessage
-        return MiniMessage.miniMessage().deserialize(text);
     }
-
-    /**
-     * Specifically handles LuckPerms prefixes which might only be Legacy.
-     */
-    public static Component parseLegacy(String text) {
-        if (text == null) return Component.empty();
-        return LegacyComponentSerializer.legacyAmpersand().deserialize(text);
-    }
-          }
+}
