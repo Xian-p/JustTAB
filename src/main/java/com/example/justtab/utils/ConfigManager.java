@@ -1,4 +1,4 @@
-package com.example.justtab.utils;
+package com.example.justtab.managers;
 
 import com.example.justtab.JustTAB;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -21,6 +21,10 @@ public class ConfigManager {
 
     public String getString(String path) {
         return config.getString(path, "");
+    }
+    
+    public boolean getBoolean(String path) {
+        return config.getBoolean(path, true);
     }
 
     public List<String> getStringList(String path) {
