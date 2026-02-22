@@ -18,10 +18,15 @@ import java.util.Date;
 import java.util.List;
 
 public class BoardManager {
+
     private final JustTAB plugin;
+    private final MiniMessage mm;
     private BukkitTask task;
 
-    public BoardManager(JustTAB plugin) { this.plugin = plugin; }
+    public BoardManager(JustTAB plugin) {
+        this.plugin = plugin;
+        this.mm = MiniMessage.miniMessage();
+    }
 
     public void startTask() {
         if (!plugin.getPluginConfig().getBoolean("scoreboard.enabled")) return;
@@ -31,17 +36,22 @@ public class BoardManager {
 
     public void stopTask() {
         if (task != null) task.cancel();
+        // Reset scoreboards for all players
         for (Player p : Bukkit.getOnlinePlayers()) {
             p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         }
     }
 
     public void updateAll() {
-        for (Player p : Bukkit.getOnlinePlayers()) updatePlayer(p);
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            updatePlayer(p);
+        }
     }
 
     private void updatePlayer(Player player) {
         Scoreboard board = player.getScoreboard();
+        
+        // Ensure player has a private scoreboard
         if (board.equals(Bukkit.getScoreboardManager().getMainScoreboard())) {
             board = Bukkit.getScoreboardManager().getNewScoreboard();
             player.setScoreboard(board);
@@ -53,49 +63,59 @@ public class BoardManager {
             obj.setDisplaySlot(DisplaySlot.SIDEBAR);
         }
 
-        // Title
-        String title = plugin.getPluginConfig().getString("scoreboard.title");
-        obj.displayName(ColorUtil.parse(title));
+        // 1. Update Title (Fix: Convert colors first)
+        String rawTitle = plugin.getPluginConfig().getString("scoreboard.title");
+        String convertedTitle = ColorUtil.convert(rawTitle);
+        obj.displayName(mm.deserialize(convertedTitle));
 
-        // Lines
+        // 2. Update Lines
         List<String> lines = plugin.getPluginConfig().getStringList("scoreboard.lines");
-        int score = lines.size();
+        int scoreIndex = lines.size();
 
         for (String line : lines) {
+            // Parse line with placeholders and colors
             Component parsed = parseLine(line, player);
             
-            // Generate invisible unique entry based on score index
-            String entry = ChatColor.values()[score % 15].toString() + ChatColor.RESET;
+            // Generate unique invisible entry key
+            String entry = ChatColor.values()[scoreIndex % 15].toString() + ChatColor.RESET;
 
-            Team team = board.getTeam("line_" + score);
-            if (team == null) team = board.registerNewTeam("line_" + score);
+            Team team = board.getTeam("line_" + scoreIndex);
+            if (team == null) {
+                team = board.registerNewTeam("line_" + scoreIndex);
+                team.addEntry(entry);
+            }
 
-            if (!team.hasEntry(entry)) team.addEntry(entry);
+            // Update the text via Team Prefix (Standard flicker-free method)
+            team.prefix(parsed);
 
-            // Update visible text
-            team.prefix(parsed); 
-
-            obj.getScore(entry).setScore(score);
-            score--;
+            // Set score
+            obj.getScore(entry).setScore(scoreIndex);
+            scoreIndex--;
         }
-        
-        // Clean extra lines
-        for(String entry : board.getEntries()) {
-            if(obj.getScore(entry).getScore() > lines.size()) board.resetScores(entry);
+
+        // Cleanup extra lines
+        for (String entry : board.getEntries()) {
+            if (obj.getScore(entry).getScore() > lines.size()) {
+                board.resetScores(entry);
+            }
         }
     }
 
     private Component parseLine(String text, Player player) {
+        // Fetch LP Data
         String prefixRaw = (plugin.getLuckPermsHook() != null) ? plugin.getLuckPermsHook().getPrefix(player) : "";
         String suffixRaw = (plugin.getLuckPermsHook() != null) ? plugin.getLuckPermsHook().getSuffix(player) : "";
 
-        Component prefixComp = ColorUtil.parseLegacy(prefixRaw);
-        Component suffixComp = ColorUtil.parseLegacy(suffixRaw);
+        // Convert LP Legacy strings to Components
+        Component prefixComp = LegacyComponentSerializer.legacyAmpersand().deserialize(prefixRaw);
+        Component suffixComp = LegacyComponentSerializer.legacyAmpersand().deserialize(suffixRaw);
 
+        // Stats
         String tps = String.format("%.2f", Bukkit.getTPS()[0]);
         String date = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
         String online = String.valueOf(Bukkit.getOnlinePlayers().size());
 
+        // Resolvers
         TagResolver placeholders = TagResolver.resolver(
             Placeholder.parsed("player", player.getName()),
             Placeholder.parsed("ping", String.valueOf(player.getPing())),
@@ -106,12 +126,10 @@ public class BoardManager {
             Placeholder.component("suffix", suffixComp)
         );
 
-        Component configParsed = ColorUtil.parse(text);
-        
-        // Merge Config Text with Placeholders
-        return MiniMessage.miniMessage().deserialize(
-            MiniMessage.miniMessage().serialize(configParsed), 
-            placeholders
-        );
+        // FIX: Convert Config String (colors) to MiniMessage format first
+        String convertedText = ColorUtil.convert(text);
+
+        // Deserialize final string
+        return mm.deserialize(convertedText, placeholders);
     }
-  }
+}
