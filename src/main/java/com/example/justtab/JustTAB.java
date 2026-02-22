@@ -5,6 +5,7 @@ import com.example.justtab.managers.ConfigManager;
 import com.example.justtab.managers.TabManager;
 import com.example.justtab.utils.ColorUtil;
 import com.example.justtab.utils.LuckPermsHook;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -49,8 +50,8 @@ public class JustTAB extends JavaPlugin {
     }
 
     public void startTasks() {
-        tabManager.startTask();
-        boardManager.startTask();
+        if (tabManager != null) tabManager.startTask();
+        if (boardManager != null) boardManager.startTask();
     }
 
     public void stopTasks() {
@@ -63,7 +64,9 @@ public class JustTAB extends JavaPlugin {
         if (command.getName().equalsIgnoreCase("justtab")) {
             if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
                 if (!sender.hasPermission("justtab.reload")) {
-                    sender.sendMessage(ColorUtil.parse("<red>No permission."));
+                    // FIX: Use convert() then deserialize
+                    String msg = ColorUtil.convert("<red>No permission.");
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize(msg));
                     return true;
                 }
                 configManager.reload();
@@ -71,10 +74,13 @@ public class JustTAB extends JavaPlugin {
                 startTasks();
                 
                 // Force immediate update
-                tabManager.updateAll();
-                boardManager.updateAll();
+                if (tabManager != null) tabManager.updateAll();
+                if (boardManager != null) boardManager.updateAll();
 
-                sender.sendMessage(ColorUtil.parse(configManager.getString("messages.reload")));
+                // FIX: Use convert() then deserialize
+                String rawMsg = configManager.getString("messages.reload");
+                String convertedMsg = ColorUtil.convert(rawMsg);
+                sender.sendMessage(MiniMessage.miniMessage().deserialize(convertedMsg));
                 return true;
             }
         }
