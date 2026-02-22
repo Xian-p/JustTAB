@@ -1,19 +1,34 @@
-# How often to refresh the tablist in ticks (20 ticks = 1 second)
+# Update interval in ticks (20 ticks = 1 second)
 update-interval: 20
 
-# Header and Footer support MiniMessage format (RGB, Gradients)
-# Docs: https://docs.advntr.dev/minimessage/format.html
+# TABLIST SETTINGS
+# Supports: &a, &#FF0000, and <gradient>
 header:
-  - "<gradient:#ff0000:#00ff00><bold>JustTAB Network</bold></gradient>"
-  - "<gray>Welcome, <white><player>"
+  - "<gradient:#ff0088:#aa00ff><bold> JustTAB Network </bold></gradient>"
+  - "&7Welcome, &f<player>"
 
 footer:
-  - "<gray>TPS: <green><tps> <gray>| Ping: <green><ping>ms"
-  - "<gradient:blue:aqua>store.myserver.net</gradient>"
+  - "&7Online: &f<online>"
+  - "<rainbow>www.myserver.net</rainbow>"
 
-# The format for the player's name inside the tab list
-# Placeholders: <prefix>, <suffix>, <player>
+# Tablist Name Format
+# This supports LuckPerms prefixes/suffixes automatically
 player-format: "<prefix><white><player><suffix>"
 
+# SCOREBOARD SETTINGS
+scoreboard:
+  enabled: true
+  title: "&b&lMY SERVER"
+  lines:
+    - "&7<date>"
+    - ""
+    - "&fName: &a<player>"
+    - "&fRank: <prefix>"
+    - ""
+    - "&fPing: &e<ping>ms"
+    - "&fTPS: &e<tps>"
+    - ""
+    - "<gradient:blue:aqua>play.server.net</gradient>"
+
 messages:
-  reload: "<green>JustTAB configuration reloaded successfully."
+  reload: "&aJustTAB configuration reloaded."
