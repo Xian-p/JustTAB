@@ -6,5 +6,5 @@ authors: [YourName]
 softdepend: [LuckPerms]
 permissions:
   justtab.reload:
-    description: Reload the configuration
+    description: Reload the plugin
     default: op
